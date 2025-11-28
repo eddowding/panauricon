@@ -4,6 +4,15 @@
 
 Panauricon records audio in 30-minute clock-aligned segments, automatically uploads to Firebase Storage, and transcribes using Google's Gemini 2.5 Flash with intelligent speaker detection.
 
+## 🚀 Quick Start
+
+**Want to deploy your own instance?**
+
+- **Easy way:** See [QUICKSTART.md](QUICKSTART.md) - Just run `./scripts/setup.sh` OR ask Claude/ChatGPT to set it up
+- **Manual way:** See [SETUP.md](SETUP.md) - Detailed step-by-step guide
+
+**Takes ~5 minutes** with the automated script or AI assistance.
+
 ## Features
 
 ### Core Recording
