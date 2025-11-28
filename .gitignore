@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Sensitive files
+android/app/google-services.json
+scripts/export_transcripts.sh
+*.env
+.env*
+
