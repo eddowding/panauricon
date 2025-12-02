@@ -42,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       manager.refreshRecordings();
       manager.startStatusPolling();
+      // Auto-resume recording if it was running before (handles app being killed)
+      manager.checkAndResumeIfNeeded();
     } else if (state == AppLifecycleState.paused) {
       manager.stopStatusPolling();
     }

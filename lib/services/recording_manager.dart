@@ -30,11 +30,11 @@ class RecordingManager extends ChangeNotifier {
     _audioService.onAutoStopTriggered = _handleAutoStop;
 
     _loadRecordings();
-    _checkAndResumeRecording();
+    checkAndResumeIfNeeded();
     _startHealthCheck();
   }
 
-  Future<void> _checkAndResumeRecording() async {
+  Future<void> checkAndResumeIfNeeded() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final shouldAutoResume = prefs.getBool('auto_resume_recording') ?? true;
@@ -46,7 +46,7 @@ class RecordingManager extends ChangeNotifier {
 
         // Check again if not recording (user might have started manually)
         if (!_audioService.isRecording) {
-          debugPrint('🔄 Auto-resuming recording after app restart');
+          debugPrint('🔄 Auto-resuming recording after app restart/resume');
           await startRecording();
         }
       }
