@@ -20,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isRestoring = false;
   bool? _apiKeyValid; // null = not tested, true = valid, false = invalid
   bool _isValidating = false;
+  bool _obscureApiKey = true;
 
   @override
   void initState() {
@@ -150,8 +151,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               labelText: 'API Key',
               hintText: 'Enter your API key',
               border: const OutlineInputBorder(),
-              suffixIcon: _isValidating
-                  ? const Padding(
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(_obscureApiKey ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obscureApiKey = !_obscureApiKey),
+                    tooltip: _obscureApiKey ? 'Show API key' : 'Hide API key',
+                  ),
+                  if (_isValidating)
+                    const Padding(
                       padding: EdgeInsets.all(12),
                       child: SizedBox(
                         width: 20,
@@ -159,14 +168,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     )
-                  : _apiKeyValid == null
-                      ? null
-                      : Icon(
-                          _apiKeyValid! ? Icons.check_circle : Icons.error,
-                          color: _apiKeyValid! ? Colors.green : Colors.red,
-                        ),
+                  else if (_apiKeyValid != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: Icon(
+                        _apiKeyValid! ? Icons.check_circle : Icons.error,
+                        color: _apiKeyValid! ? Colors.green : Colors.red,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            obscureText: true,
+            obscureText: _obscureApiKey,
             onChanged: (_) => setState(() => _apiKeyValid = null), // Reset validation on change
           ),
           const SizedBox(height: 8),
@@ -215,13 +228,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // WiFi-only upload toggle
           Consumer<UploadService>(
-            builder: (context, uploadService, _) => SwitchListTile(
-              title: const Text('WiFi-only uploads'),
-              subtitle: const Text('Only upload recordings when connected to WiFi'),
-              value: uploadService.wifiOnlyUpload,
-              onChanged: (value) {
-                uploadService.wifiOnlyUpload = value;
-              },
+            builder: (context, uploadService, _) => Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('WiFi-only uploads'),
+                  subtitle: const Text('Only upload recordings when connected to WiFi'),
+                  value: uploadService.wifiOnlyUpload,
+                  onChanged: (value) {
+                    uploadService.wifiOnlyUpload = value;
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Triggering upload queue...')),
+                      );
+                      await uploadService.processUploadQueue();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('✅ Upload queue processed'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.cloud_upload),
+                    label: const Text('Force Upload Now'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
