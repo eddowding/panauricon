@@ -21,7 +21,7 @@ void initForegroundTask() {
     foregroundTaskOptions: ForegroundTaskOptions(
       eventAction: ForegroundTaskEventAction.repeat(1000), // Update every 1 second
       autoRunOnBoot: false,
-      autoRunOnMyPackageReplaced: true,
+      autoRunOnMyPackageReplaced: false, // Disabled: Android 12+ blocks background service starts
       allowWakeLock: true,
       allowWifiLock: true,
     ),
@@ -29,22 +29,30 @@ void initForegroundTask() {
 }
 
 /// Start the foreground service for recording
+/// Returns true if successful, false if failed (e.g., Android 12+ background restriction)
 Future<bool> startForegroundService() async {
-  if (await FlutterForegroundTask.isRunningService) {
-    debugPrint('🔵 Foreground service already running');
-    return true;
+  try {
+    if (await FlutterForegroundTask.isRunningService) {
+      debugPrint('🔵 Foreground service already running');
+      return true;
+    }
+
+    debugPrint('🔵 Starting foreground service');
+    final result = await FlutterForegroundTask.startService(
+      notificationTitle: 'Panauricon',
+      notificationText: 'Active',
+      callback: startCallback,
+    );
+
+    final success = result is ServiceRequestSuccess;
+    debugPrint('🔵 Foreground service start result: $success');
+    return success;
+  } catch (e) {
+    // Android 12+ throws ForegroundServiceStartNotAllowedException when
+    // trying to start foreground service from background
+    debugPrint('🔴 Foreground service start failed: $e');
+    return false;
   }
-
-  debugPrint('🔵 Starting foreground service');
-  final result = await FlutterForegroundTask.startService(
-    notificationTitle: 'Panauricon',
-    notificationText: 'Active',
-    callback: startCallback,
-  );
-
-  final success = result is ServiceRequestSuccess;
-  debugPrint('🔵 Foreground service start result: $success');
-  return success;
 }
 
 /// Stop the foreground service

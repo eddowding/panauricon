@@ -22,9 +22,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Start polling for transcription updates
+    // Start polling for transcription updates and check auto-resume
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RecordingManager>().startStatusPolling();
+      final manager = context.read<RecordingManager>();
+      manager.startStatusPolling();
+      // Auto-resume recording on app launch (safe: we're in foreground)
+      manager.checkAndResumeIfNeeded();
       // Check and request battery optimization exemption on first launch
       BatteryOptimizationService.checkAndRequestBatteryOptimization(context);
     });

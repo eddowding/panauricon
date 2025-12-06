@@ -30,7 +30,8 @@ class RecordingManager extends ChangeNotifier {
     _audioService.onAutoStopTriggered = _handleAutoStop;
 
     _loadRecordings();
-    checkAndResumeIfNeeded();
+    // Note: checkAndResumeIfNeeded() is called from HomeScreen.didChangeAppLifecycleState
+    // when app comes to foreground, not here, to avoid Android 12+ background service restrictions
     _startHealthCheck();
   }
 
