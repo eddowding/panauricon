@@ -189,9 +189,19 @@ class RecordingManager extends ChangeNotifier {
   }
 
   Future<void> _checkTranscriptionStatus() async {
+    // Log all recording statuses for debugging
+    final statusCounts = <String, int>{};
+    for (final r in _recordings) {
+      final status = r.status.toString().split('.').last;
+      statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+    }
+    debugPrint('📊 Recording status summary: $statusCounts');
+
     final transcribingRecordings = _recordings.where(
       (r) => r.status == RecordingStatus.transcribing || r.status == RecordingStatus.uploaded,
     ).toList();
+
+    debugPrint('🔍 Checking ${transcribingRecordings.length} recordings for transcription status');
 
     for (final recording in transcribingRecordings) {
       try {

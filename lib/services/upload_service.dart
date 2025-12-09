@@ -117,9 +117,12 @@ class UploadService extends ChangeNotifier {
   }
 
   Future<void> processUploadQueue() async {
-    if (_isProcessing) return;
+    if (_isProcessing) {
+      debugPrint('📤 Upload queue: Already processing, skipping');
+      return;
+    }
     if (_apiService.apiKey == null) {
-      debugPrint('No API key configured, skipping upload');
+      debugPrint('❌ No API key configured, skipping upload');
       return;
     }
 
@@ -128,15 +131,19 @@ class UploadService extends ChangeNotifier {
 
     try {
       final pendingRecordings = await _databaseService.getPendingUploads();
+      debugPrint('📤 Upload queue: Found ${pendingRecordings.length} pending recordings');
 
       for (final recording in pendingRecordings) {
+        debugPrint('📤 Processing recording: ${recording.id} status=${recording.status}');
+
         if (!await hasInternetConnection()) {
-          debugPrint('Lost connection, pausing uploads');
+          debugPrint('❌ Lost connection, pausing uploads');
           break;
         }
 
         // Check if recording is ready to retry based on exponential backoff
         if (!await _isReadyToRetry(recording.id)) {
+          debugPrint('⏳ Recording ${recording.id} not ready (backoff)');
           continue;
         }
 
