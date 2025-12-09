@@ -167,6 +167,20 @@ class ApiService extends ChangeNotifier {
     }
   }
 
+  // Retry all stuck transcriptions (transcribing or uploaded status)
+  Future<Map<String, dynamic>> retryStuckTranscriptions() async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/admin/retry-stuck-transcriptions'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw ApiException('Failed to retry stuck transcriptions: ${response.body}');
+    }
+
+    return jsonDecode(response.body);
+  }
+
   // Get signed audio URL
   Future<String> getAudioUrl(String recordingId) async {
     final response = await http.get(

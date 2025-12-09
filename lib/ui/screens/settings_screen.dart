@@ -18,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedModel = 'flash';
   bool _isLoading = true;
   bool _isRestoring = false;
+  bool _isRetryingStuck = false;
   bool? _apiKeyValid; // null = not tested, true = valid, false = invalid
   bool _isValidating = false;
   bool _obscureApiKey = true;
@@ -112,6 +113,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } finally {
       setState(() => _isRestoring = false);
+    }
+  }
+
+  Future<void> _retryStuckTranscriptions() async {
+    setState(() => _isRetryingStuck = true);
+
+    try {
+      final apiService = context.read<ApiService>();
+      final recordingManager = context.read<RecordingManager>();
+
+      final result = await apiService.retryStuckTranscriptions();
+      final processed = result['processed'] ?? 0;
+
+      // Refresh local recordings to get updated statuses
+      await recordingManager.refreshRecordings();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Retrying $processed stuck transcriptions'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Retry failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() => _isRetryingStuck = false);
     }
   }
 
@@ -328,6 +364,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 8),
           const Text(
             'Pull down all your recordings from the server.',
+            style: TextStyle(color: Colors.grey, fontSize: 11),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _isRetryingStuck ? null : _retryStuckTranscriptions,
+            icon: _isRetryingStuck
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+            label: Text(_isRetryingStuck ? 'Retrying...' : 'Retry Stuck Transcriptions'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Retry transcriptions that are stuck in "transcribing" status.',
             style: TextStyle(color: Colors.grey, fontSize: 11),
           ),
 
